@@ -1,0 +1,252 @@
+%% LyX 2.2.1 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+%\VignetteEngine{knitr::knitr}
+%\VignetteIndexEntry{RLassoCox}
+\documentclass{article}
+\usepackage[sc]{mathpazo}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,rmargin=2.5cm}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\usepackage{url}
+\usepackage[unicode=true,pdfusetitle,
+bookmarks=true,bookmarksnumbered=true,bookmarksopen=true,bookmarksopenlevel=2,
+breaklinks=false,pdfborder={0 0 1},backref=false,colorlinks=false]
+{hyperref}
+\hypersetup{
+pdfstartview={XYZ null null 1}}
+\usepackage{breakurl}
+\begin{document}
+% <<style-knitr, eval=TRUE, echo=FALSE, results="asis">>=
+% BiocStyle::latex()
+% @
+<<setup, include=FALSE, cache=FALSE>>=
+library(knitr)
+# set global chunk options
+opts_chunk$set(fig.path='figure/minimal-', fig.align='center', fig.show='hold')
+options(formatR.arrow=TRUE,width=90)
+@
+
+\title{An introduction to \textbf{RLassoCox}}
+
+\author{Wei Liu\\
+freelw@qq.com\\
+Heilongjiang Institute of Technology}
+% \affil{Heilongjiang Institute of Technology}
+
+\maketitle
+
+\section{Introduction}
+\textbf{RLassoCox} is a package that implements the RLasso-Cox model proposed 
+by Wei Liu. The RLasso-Cox model integrates gene interaction information into 
+the Lasso-Cox model for accurate survival prediction and survival biomarker 
+discovery. It is based on the hypothesis that topologically important genes in 
+the gene interaction network tend to have stable expression changes. The 
+RLasso-Cox model uses random walk to evaluate the topological weight of genes, 
+and then highlights topologically important genes to improve the generalization 
+ability of the Lasso-Cox model. The RLasso-Cox model has the advantage of 
+identifying small gene sets with high prognostic performance on independent 
+datasets, which may play an important role in identifying robust survival 
+biomarkers for various cancer types.\par
+\textbf{RLassoCox} solves the following problem
+\begin{equation}
+\max_{\beta}\sum_{i=1}^{m}\left(x_{j(i)}^{T}\beta-\log\bigg(\sum_{j\in 
+R_i}e^{x_{i}^{T}\beta}\bigg)\right)-\lambda\sum_{k=1}^{p}\varphi(w_k)|\beta_k|
+\end{equation}
+over a grid of values of $\lambda$ . Here the first term represents the log 
+partial likelihood function, and the second term is a topologically weighted 
+$L_1$-norm constraint.
+
+\section{Installation}
+Like many other R packages, the simplest way to obtain RLassoCox is to install 
+it directly from Bioconductor. Type the following command in R console:
+
+<<Installation>>=
+# if (!requireNamespace("BiocManager", quietly = TRUE))
+#     install.packages("BiocManager")
+# BiocManager::install("RLassoCox")
+@
+
+
+
+\section{RLassoCox}
+In this section, we will go over the main functions, see the basic operations 
+and have a look at the outputs. Users may have a better idea after this section
+what functions are available, which one to choose, or at least where to seek 
+help. \par
+First, we load the RLassoCox package:
+<<load package>>=
+library("RLassoCox")
+@
+
+The RLassoCox package trains the RLasso-Cox model based on gene expression 
+profiles, survival information and gene interaction networks. We load a set 
+of data created beforehand for illustration. Users can either load their own 
+data or use those saved in the workspace.\par
+
+<<load data>>=
+data(mRNA_matrix) # gene expression profiles
+data(survData)    # survival information
+data(dGMMirGraph) # gene interaction network
+@
+
+The commands load an input gene expression matrix $\bf{mRNA\_matrix}$,  a data 
+frame $\textbf{survData}$ that contains survival information, and an igraph 
+object $\textbf{survData}$ that contains the KEGG network constructed by the 
+R package $\textbf{iSubpathwayMiner}$.\par
+
+\textbf{survData} is an n x 2 matrix, with a column "time" of failure/censoring 
+times, and "status" a 0/1 indicator, with 1 meaning the time is a failure time, 
+and zero a censoring time.
+
+<<survData>>=
+head(survData)
+@
+
+In order to train and test the predictive performance of the RLasso-Cox model, 
+we divide the data set into a training set and a test set.
+
+<<Split data set>>=
+set.seed(20150122)
+train.Idx <- sample(1:dim(mRNA_matrix)[1], floor(2/3*dim(mRNA_matrix)[1]))
+test.Idx <- setdiff(1:dim(mRNA_matrix)[1], train.Idx)
+x.train <- mRNA_matrix[train.Idx ,]
+x.test <- mRNA_matrix[test.Idx ,]
+y.train <- survData[train.Idx,]
+y.test <- survData[test.Idx,]
+@
+
+Train the RLasso-Cox model based on the training set data:
+<<Train model>>=
+mod <- RLassoCox(x=x.train, y=y.train, globalGraph=dGMMirGraph)
+@
+
+The \textbf{RLassoCox} function depends on the \textbf{glmnet} 
+package\cite{ref1}. \textbf{mod} contains a list object that includes a 
+\textbf{glmnet} object \textbf{glmnetRes} and a topological weight vector 
+\textbf{PT}. \textbf{PT} is the topological weights of the genes.
+
+<<PT>>=
+head(mod$PT)
+@
+
+
+\textbf{glmnetRes} contains all the relevant information of the fitted model 
+for further use. We can use the \textbf{plot}, \textbf{print}, \textbf{coef} 
+and \textbf{predict} functions in the \textbf{glmnet} package to easily extract
+the components of the model.
+
+We can visualize the coefficients by executing the \textbf{plot} function:
+
+<<Plot>>=
+plot(mod$glmnetRes)
+@
+
+Each curve in the figure corresponds to a variable (gene). It shows the path of 
+the coefficient of each gene and $L_1$-norm when $\lambda$ varies. The axis 
+above indicates the number of nonzero coefficients at the current $\lambda$, 
+which is the effective degrees of freedom for the RLasso-Cox model.
+
+A summary of the \textbf{RLassoCox} path at each step is displayed if we just 
+enter the object name or use the print function:
+
+<<Print>>=
+print(mod$glmnetRes)
+@
+
+The first column \textbf{df} represents the number of non-zero coefficients, 
+the second column \textbf{\%Dev} represents the percent (of null) deviance 
+explained, and the third column \textbf{Lambda} represents the value of 
+$\lambda$.
+
+The actual coefficients of genes at one or more $\lambda$s within the range of 
+the sequence can be obtained:
+
+<<coef>>=
+head(coef(mod$glmnetRes, s = 0.2))
+@
+
+The \textbf{glmnetRes} model can be used to predict the risk of new patients 
+at one or more $\lambda$s.
+
+<<predict.RLassoCox>>=
+lp <- predict(object = mod, newx = x.test, s = c(0.1, 0.2))
+head(lp)
+@
+
+The function \textbf{cvRLassoCox} can be used to compute k-fold cross-validation
+for the RLasso-Cox model.
+
+<<cv.RLassoCox>>=
+cv.mod <- cvRLassoCox(x=x.train, y=y.train,
+                        globalGraph=dGMMirGraph, nfolds = 5)
+@
+
+The \textbf{cvRLassoCox} function also returns a list object that contains a 
+\textbf{cv.glmnet} object \textbf{glmnetRes} and a topological weight vector 
+\textbf{PT}. In addition, the optimal $\lambda$ value and a cross validated 
+error plot can be obtained to help evaluate our model.
+
+<<plot>>=
+plot(cv.mod$glmnetRes, xlab = "log(lambda)")
+@
+
+In this plot, the left vertical line shows where the CV-error curve hits its 
+minimum. The
+right vertical line shows us the most regularized model with CV-error within 1 
+standard deviation of the
+minimum. The optimal $\lambda$ can be obtained:
+
+<<optimal lambda>>=
+cv.mod$glmnetRes$lambda.min
+cv.mod$glmnetRes$lambda.1se
+@
+
+We can check the active covariates (genes) in our model and see their 
+coefficients.
+
+<<coef.min>>=
+coef.min <- coef(cv.mod$glmnetRes, s = "lambda.min")
+coef.min
+@
+
+The selected features and their coefficients can by obtained:
+
+<<features>>=
+nonZeroIdx <- which(coef.min[,1] != 0)
+features <- rownames(coef.min)[nonZeroIdx]
+features
+features.coef <- coef.min[nonZeroIdx]
+names(features.coef) <- features
+features.coef
+@
+
+The fitted RLassoCox model can by used to predicted survival risk of new 
+patients:
+
+<<prediction>>=
+lp <- predict.cvRLassoCox(object = cv.mod, newx = x.test, 
+                        s = "lambda.min")
+lp
+@
+
+
+\section{SessionInfo()}
+
+<<SessionInfo>>=
+sessionInfo()
+@
+
+
+
+\begin{thebibliography}{99}  
+\bibitem{ref1}Simon, Noah, Jerome Friedman, Trevor Hastie, and Robert 
+Tibshirani. Regularization Paths for Cox's Proportional Hazards Model via 
+Coordinate Descent. Journal of Statistical Software. 2011, 39(5): 1-13.
+
+\end{thebibliography}
+
+
+
+\end{document}

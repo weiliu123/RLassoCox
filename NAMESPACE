@@ -1,0 +1,11 @@
+S3method(predict, cvRLassoCox)
+S3method(predict, RLassoCox)
+export("RLassoCox", "predict.RLassoCox", "cvRLassoCox",
+        "predict.cvRLassoCox")
+importFrom("stats", "as.formula", "predict")
+import(
+    Matrix,
+    igraph,
+    survival,
+    glmnet
+)
