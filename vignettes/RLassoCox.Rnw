@@ -5,6 +5,7 @@
 \documentclass{article}
 \usepackage[sc]{mathpazo}
 \usepackage[T1]{fontenc}
+\usepackage{lmodern}
 \usepackage{geometry}
 \geometry{verbose,tmargin=2.5cm,bmargin=2.5cm,lmargin=2.5cm,rmargin=2.5cm}
 \setcounter{secnumdepth}{2}
@@ -91,10 +92,10 @@ data(survData)    # survival information
 data(dGMMirGraph) # gene interaction network
 @
 
-The commands load an input gene expression matrix $\bf{mRNA\_matrix}$,  a data 
-frame $\textbf{survData}$ that contains survival information, and an igraph 
-object $\textbf{survData}$ that contains the KEGG network constructed by the 
-R package $\textbf{iSubpathwayMiner}$.\par
+The commands load an input gene expression matrix $\textbf{mRNA\_matrix}$,  a 
+data frame $\textbf{survData}$ that contains survival information, and an 
+igraph object $\textbf{survData}$ that contains the KEGG network constructed
+by the R package $\textbf{iSubpathwayMiner}$.\par
 
 \textbf{survData} is an n x 2 matrix, with a column "time" of failure/censoring 
 times, and "status" a 0/1 indicator, with 1 meaning the time is a failure time, 
