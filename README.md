@@ -24,7 +24,7 @@ License: Artistic-2.0
 
 biocViews: Survival, Regression, GeneExpression, GenePrediction, Network
 
-BugReports: https://github.com/weiliu123/RLassoCox
+BugReports: https://github.com/weiliu123/RLassoCox/issues
 
 BiocType: Software
 
