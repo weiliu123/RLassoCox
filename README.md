@@ -8,7 +8,7 @@ Type: Package
 
 Title: A reweighted Lasso-Cox by integrating gene interaction information
 
-Version: 0.99.3
+Version: 0.99.4
 
 Date: 2020-11-20
 
