@@ -3,9 +3,9 @@ S3method(predict, RLassoCox)
 export("RLassoCox", "predict.RLassoCox", "cvRLassoCox",
         "predict.cvRLassoCox")
 importFrom("stats", "as.formula", "predict")
+importFrom("survival", "coxph", "Surv")
+importFrom("igraph", "V", "vcount", "as_adjacency_matrix")
 import(
     Matrix,
-    igraph,
-    survival,
     glmnet
 )
