@@ -1,7 +1,7 @@
 Package: RLassoCox
 Type: Package
 Title: A reweighted Lasso-Cox by integrating gene interaction information
-Version: 0.99.4
+Version: 0.99.5
 Date: 2020-10-21
 Authors@R: c(person(given = "Wei", family = "Liu", email = "freelw@qq.com", role = c("cre", "aut"),comment = c(ORCID = "0000-0002-5496-3641")))
 Depends: R (>= 4.1), glmnet
